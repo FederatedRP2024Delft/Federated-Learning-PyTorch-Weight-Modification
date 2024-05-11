@@ -15,10 +15,10 @@ import torch
 from tensorboardX import SummaryWriter
 
 from options import args_parser
-from vae.mnist_vae import VaeAutoencoderClassifier
+from src.henry.mnist_vae_pure import VariationalAutoencoder
 from update import LocalUpdate, test_inference
 from models import MLP, CNNMnist, CNNFashion_Mnist, CNNCifar
-from utils import get_dataset, average_weights, exp_details, fed_avg
+from utils import get_dataset, exp_details, fed_avg
 
 if __name__ == '__main__':
     start_time = time.time()
@@ -57,7 +57,7 @@ if __name__ == '__main__':
                                dim_out=args.num_classes)
 
     elif args.model == 'vae':
-        global_model = VaeAutoencoderClassifier(dim_encoding=2)
+        global_model = VariationalAutoencoder(latent_dims=2)
     else:
         exit('Error: unrecognized model')
 

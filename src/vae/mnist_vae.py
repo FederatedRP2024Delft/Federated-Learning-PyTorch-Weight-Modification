@@ -165,7 +165,7 @@ class VaeAutoencoder(nn.Module):
         vae_classifier_model = self.to('cuda')
         optimizer = torch.optim.Adam(params=vae_classifier_model.parameters())
 
-        training_dataloader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
+        training_dataloader = DataLoader(training_data,batch_size=64, shuffle=True)
 
         vae_loss_li = []
         kl_loss_li = []
