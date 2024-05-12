@@ -10,7 +10,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 #https://avandekleut.github.io/vae/
-# self.kl = (sigma ** 2 + mu ** 2 - torch.log(sigma) - (1 / 2)).sum()
+# https://kvfrans.com/deriving-the-kl/
 # https://2020machinelearning.medium.com/exploring-different-methods-for-calculating-kullback-leibler-divergence-kl-in-variational-12197138831f
 MNIST_INPUT_SIZE = 784
 HIDDEN_LAYER_SIZE_1 = 512
@@ -38,7 +38,7 @@ class VariationalEncoder(nn.Module):
         mu = self.linear3(x)
         sigma = torch.exp(self.linear4(x))
         z = mu + sigma * self.N.sample(mu.shape)
-        self.kl = ((-1/2) * (1 + torch.log(sigma) - (mu ** 2) - (sigma ** 2))).sum()
+        self.kl = (1/2) * (-1 * torch.log(sigma ** 2) - 1 + (sigma ** 2) + (mu ** 2)).sum()
         return z
 
 

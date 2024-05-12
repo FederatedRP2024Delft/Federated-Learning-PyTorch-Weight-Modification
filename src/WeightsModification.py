@@ -1,5 +1,6 @@
 import numpy as np
 from torch.utils.data import Subset, DataLoader
+import pickle
 
 
 class ClientDatasetManager:
@@ -40,3 +41,19 @@ class ClientLossManager:
         self.validation_total_across_communication.append(total)
         self.validation_mse_across_communication.append(mse)
         self.validation_kl_across_communication.append(kl)
+
+class FederationResult:
+    def __init__(self, global_model, all_losses, client_datasets):
+        self.global_model = global_model
+        self.all_losses = all_losses
+        self.client_datasets= client_datasets
+
+    def serialise(self, identifier, args):
+        file_name = '../../save/objects/{}_{}_{}_COMMS{}_LOCAL{}_BS{}_USERS{}.pkl'. \
+            format(identifier,args.dataset, "VAE", args.epochs, args.local_ep, args.local_bs, args.num_users)
+
+        with open(file_name, 'wb') as f:
+            pickle.dump(self, f)
+
+
+

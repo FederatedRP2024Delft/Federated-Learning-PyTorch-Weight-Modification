@@ -5,6 +5,8 @@
 import copy
 import torch
 from torch import tensor
+from torch.utils.data import DataLoader
+
 from sampling import *
 from sampling import mnist_iid, mnist_noniid, mnist_noniid_unequal
 from sampling import cifar_iid, cifar_noniid
@@ -92,15 +94,14 @@ def average_weights(w):
         w_avg[key] = torch.div(w_avg[key], len(w))
     return w_avg
 
-def fed_avg(local_weights, dataset_size_per_client):
+def fed_avg(local_weights, client_weights):
     avg_dict = {}
-    sum_dataset = sum(dataset_size_per_client)
     for i, dictionary in enumerate(local_weights):
         for key, tensor in dictionary.items():
             if key not in avg_dict:
-                avg_dict[key] = tensor.clone() * (dataset_size_per_client[i]/ sum_dataset)
+                avg_dict[key] = copy.deepcopy(tensor) * client_weights[i]
             else:
-                avg_dict[key] += tensor.clone() * (dataset_size_per_client[i]/sum_dataset)
+                avg_dict[key] += copy.deepcopy(tensor) * client_weights[i]
     return avg_dict
 
 
@@ -175,4 +176,51 @@ def frechet_inception_distance(real_x: tensor, syn_x: tensor) -> tensor:
     fid.update(real_x, is_real=True)
     fid.update(syn_x, is_real=False)
     return fid.compute()
+
+
+def calculate_relative_dataset_sizes(client_dataset_wrappers):
+    client_sizes = [wrapper.train_length() for wrapper in client_dataset_wrappers]
+    total_size = sum(client_sizes)
+    return [(dataset_size / total_size) for dataset_size in client_sizes]
+
+
+def calculate_kl_distance_across_all_clients(encoder, client_datasets):
+    encoder.to('cuda')
+    kl_distances = []
+    encoder.eval()
+    with torch.no_grad():
+        for dataset in client_datasets:
+            data_loader = DataLoader(dataset=dataset.training_subset, batch_size=len(dataset.training_subset))
+            looptydoopty = 0
+            for whole_batch, _ in data_loader:
+                whole_batch = whole_batch.to('cuda')
+                looptydoopty += 1
+                encoder.forward(whole_batch)
+
+            assert looptydoopty == 1
+            kl_distances.append(encoder.kl.item())
+
+    encoder.train()
+    return kl_distances
+
+def calculate_inverse_divergences(kl_divergences):
+    inv_divergences = [1 / div for div in kl_divergences]
+    return [inv / sum(inv_divergences) for inv in inv_divergences]
+
+
+def __calculate_new_weight(inverse_kl_distances, client_dataset_wrappers, gamma):
+    res = []
+    assert 0 <= gamma <= 1
+    assert len(inverse_kl_distances) == len(client_dataset_wrappers)
+    relative_dataset_sizes = calculate_relative_dataset_sizes(client_dataset_wrappers)
+    for i in range(len(client_dataset_wrappers)):
+        new_client_weight = gamma * relative_dataset_sizes[i] + (1 - gamma) * inverse_kl_distances[i]
+        res.append(new_client_weight)
+    return res
+
+def calculate_new_weights(encoder, client_dataset_wrappers, gamma):
+    kl_distances = calculate_kl_distance_across_all_clients(encoder, client_dataset_wrappers)
+    inverse_kl_distances = calculate_inverse_divergences(kl_distances)
+    return __calculate_new_weight(inverse_kl_distances, client_dataset_wrappers, gamma)
+
 
