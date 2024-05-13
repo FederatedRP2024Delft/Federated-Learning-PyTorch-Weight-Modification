@@ -24,7 +24,7 @@ class ClientDatasetManager:
 
 class ClientLossManager:
 
-    def __init__(self):
+    def __federatedresinit__(self):
         self.train_total_across_communication = []
         self.train_mse_across_communication = []
         self.train_kl_across_communication = []
