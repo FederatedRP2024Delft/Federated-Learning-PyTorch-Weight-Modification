@@ -24,13 +24,16 @@ class ClientDatasetManager:
 
 class ClientLossManager:
 
-    def __federatedresinit__(self):
+    def __init__(self):
         self.train_total_across_communication = []
         self.train_mse_across_communication = []
         self.train_kl_across_communication = []
         self.validation_total_across_communication = []
         self.validation_mse_across_communication = []
         self.validation_kl_across_communication = []
+        self.test_total_loss = 0
+        self.test_mse_loss = 0
+        self.test_kl_loss = 0
 
     def add_training_losses(self, li_total, li_mse, li_kl):
         self.train_total_across_communication.append(np.average(li_total))
@@ -41,6 +44,48 @@ class ClientLossManager:
         self.validation_total_across_communication.append(total)
         self.validation_mse_across_communication.append(mse)
         self.validation_kl_across_communication.append(kl)
+
+
+    @staticmethod
+    def process_data(client_loss_managers):
+
+        train_total_loss = []
+        train_mse_loss = []
+        train_kl_loss = []
+
+        validation_total_loss = []
+        validation_mse_loss = []
+        validation_kl_loss = []
+
+        num_comm_rounds = len(client_loss_managers[0].train_total_across_communication)
+        for round_idx in range(num_comm_rounds):
+            round_train_total_loss = 0
+            round_train_mse_loss = 0
+            round_train_kl_loss = 0
+            round_validation_total_loss = 0
+            round_validation_mse_loss = 0
+            round_validation_kl_loss = 0
+            for client_idx in range(len(client_loss_managers)):
+                round_train_total_loss += client_loss_managers[client_idx].train_total_across_communication[round_idx]
+                round_train_mse_loss += client_loss_managers[client_idx].train_mse_across_communication[round_idx]
+                round_train_kl_loss += client_loss_managers[client_idx].train_kl_across_communication[round_idx]
+                round_validation_total_loss += client_loss_managers[client_idx].validation_total_across_communication[round_idx]
+                round_validation_mse_loss += client_loss_managers[client_idx].validation_mse_across_communication[round_idx]
+                round_validation_kl_loss += client_loss_managers[client_idx].validation_kl_across_communication[round_idx]
+
+            train_total_loss.append(round_train_total_loss / len(client_loss_managers))
+            train_mse_loss.append(round_train_mse_loss / len(client_loss_managers))
+            train_kl_loss.append(round_train_kl_loss / len(client_loss_managers))
+            validation_total_loss.append(round_validation_total_loss / len(client_loss_managers))
+            validation_mse_loss.append(round_validation_mse_loss / len(client_loss_managers))
+            validation_kl_loss.append(round_validation_kl_loss / len(client_loss_managers))
+
+        return train_total_loss, train_mse_loss, train_kl_loss, validation_total_loss, validation_mse_loss, validation_kl_loss
+
+
+
+
+
 
 class FederationResult:
     def __init__(self, global_model, all_losses, client_datasets):

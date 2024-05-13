@@ -15,7 +15,7 @@ import torch.nn.functional as F
 MNIST_INPUT_SIZE = 784
 HIDDEN_LAYER_SIZE_1 = 512
 HIDDEN_LAYER_SIZE_2 = 256
-DEFAULT_LATENT_DIM = 2
+DEFAULT_LATENT_DIM = 10
 
 
 class VariationalEncoder(nn.Module):
@@ -32,13 +32,13 @@ class VariationalEncoder(nn.Module):
         self.kl = 0
 
     def forward(self, x):
-        x = torch.flatten(x, start_dim=1)
         x = F.relu(self.linear1(x))
         x = F.relu(self.linear2(x))
         mu = self.linear3(x)
         sigma = torch.exp(self.linear4(x))
+        # (batch size, 2)
         z = mu + sigma * self.N.sample(mu.shape)
-        self.kl = (1/2) * (-1 * torch.log(sigma ** 2) - 1 + (sigma ** 2) + (mu ** 2)).sum()
+        self.kl = torch.sum((1/2) * (-1 * torch.log(sigma ** 2) - 1 + (sigma ** 2) + (mu ** 2)), dim=1).mean()
         return z
 
 
@@ -53,7 +53,7 @@ class VariationalDecoder(nn.Module):
         z = F.relu(self.linear1(z))
         z = F.relu(self.linear2(z))
         z = torch.sigmoid(self.linear3(z))
-        return z.reshape((-1, 1, 28, 28))
+        return z
 
 
 class VariationalAutoencoder(nn.Module):
@@ -93,11 +93,14 @@ class VariationalAutoencoder(nn.Module):
                 x = x.to('cuda')
                 opt.zero_grad()
 
+                x = torch.flatten(x, start_dim=1)
                 # Forward pass
                 x_hat = vae(x)
 
+
                 # Calculate losses
-                mse_loss = ((x_hat - x) ** 2).sum()
+                loss_fn = nn.MSELoss(reduction="none")
+                mse_loss = torch.sum(loss_fn(x_hat,x),dim=1).mean()
                 kl_loss = beta * vae.encoder.kl
                 loss = mse_loss + kl_loss
 
@@ -139,10 +142,12 @@ class VariationalAutoencoder(nn.Module):
                 x = x.to('cuda')
 
                 # Forward pass
+                x = torch.flatten(x, start_dim=1)
                 x_hat = vae(x)
 
             # Calculate losses
-            mse_loss = ((x_hat - x) ** 2).sum()
+            loss_fn = nn.MSELoss(reduction="none")
+            mse_loss = torch.sum(loss_fn(x_hat,x),dim=1).mean()
             kl_loss = beta * vae.encoder.kl
             loss = mse_loss + kl_loss
 

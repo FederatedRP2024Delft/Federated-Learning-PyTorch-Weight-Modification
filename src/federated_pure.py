@@ -54,9 +54,9 @@ def federate(args, custom_client_weights=None, custom_client_datasets=None):
         global_weights = fed_avg(local_weights, client_weights)
         global_model.load_state_dict(global_weights)
 
-    global_model.eval()
-    total_test_loss, mse_test_loss, kl_test_loss = global_model.evaluate_model(test_dataset, 128)
-    client_losses[user_idx].add_validation_losses(total_test_loss, mse_test_loss, kl_test_loss)
+    # global_model.eval()
+    # total_test_loss, mse_test_loss, kl_test_loss = global_model.evaluate_model(test_dataset, 128)
+    # client_losses[user_idx].add_validation_losses(total_test_loss, mse_test_loss, kl_test_loss)
 
     return FederationResult(global_model, client_losses, client_datasets)
 
