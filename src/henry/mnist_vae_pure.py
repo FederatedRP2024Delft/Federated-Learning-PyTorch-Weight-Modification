@@ -145,15 +145,15 @@ class VariationalAutoencoder(nn.Module):
                 x = torch.flatten(x, start_dim=1)
                 x_hat = vae(x)
 
-            # Calculate losses
-            loss_fn = nn.MSELoss(reduction="none")
-            mse_loss = torch.sum(loss_fn(x_hat,x),dim=1).mean()
-            kl_loss = beta * vae.encoder.kl
-            loss = mse_loss + kl_loss
+                # Calculate losses
+                loss_fn = nn.MSELoss(reduction="none")
+                mse_loss = torch.sum(loss_fn(x_hat,x),dim=1).mean()
+                kl_loss = beta * vae.encoder.kl
+                loss = mse_loss + kl_loss
 
-            total_loss += loss.item()
-            total_mse_loss += mse_loss.item()
-            total_kl_loss += kl_loss.item()
+                total_loss += loss.item()
+                total_mse_loss += mse_loss.item()
+                total_kl_loss += kl_loss.item()
 
         return total_loss / num_batches, total_mse_loss / num_batches, total_kl_loss / num_batches
 
