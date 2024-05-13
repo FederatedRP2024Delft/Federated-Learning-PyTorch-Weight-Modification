@@ -9,9 +9,14 @@ from torch import Tensor
 import torch.nn as nn
 import torch.nn.functional as F
 
+
+
+# https://github.com/AntixK/PyTorch-VAE/blob/master/models/vanilla_vae.py
 #https://avandekleut.github.io/vae/
 # https://kvfrans.com/deriving-the-kl/
 # https://2020machinelearning.medium.com/exploring-different-methods-for-calculating-kullback-leibler-divergence-kl-in-variational-12197138831f
+# https://stats.stackexchange.com/questions/562374/implementing-a-vae-in-pytorch-extremely-negative-training-loss
+# https://stackoverflow.com/questions/74865368/kl-divergence-loss-equation
 MNIST_INPUT_SIZE = 784
 HIDDEN_LAYER_SIZE_1 = 512
 HIDDEN_LAYER_SIZE_2 = 256
@@ -37,9 +42,12 @@ class VariationalEncoder(nn.Module):
         mu = self.linear3(x)
         sigma = torch.exp(self.linear4(x))
         # (batch size, 2)
+        log_var = torch.log(sigma ** 2)
         z = mu + sigma * self.N.sample(mu.shape)
-        self.kl = torch.sum((1/2) * (-1 * torch.log(sigma ** 2) - 1 + (sigma ** 2) + (mu ** 2)), dim=1).mean()
+        self.kl = torch.mean(-0.5 * torch.sum(1 + log_var - mu ** 2 - log_var.exp(), dim = 1), dim = 0)
         return z
+
+
 
 
 class VariationalDecoder(nn.Module):

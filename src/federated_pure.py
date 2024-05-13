@@ -41,7 +41,7 @@ def federate(args, custom_client_weights=None, custom_client_datasets=None):
             local_model.load_state_dict(copy.deepcopy(global_weights))
             local_model.train()
             li_total, li_mse, li_kl = local_model.train_model(client_dataset_manager.training_subset, args.local_bs,
-                                                              args.local_ep)
+                                                              args.local_ep, beta=args.beta)
             client_losses[user_idx].add_training_losses(li_total, li_mse, li_kl)
             local_weights.append(copy.deepcopy(local_model.state_dict()))
 

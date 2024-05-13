@@ -6,6 +6,8 @@ import copy
 import torch
 from torch import tensor
 from torch.utils.data import DataLoader
+import numpy as np
+from scipy.stats import norm
 
 from sampling import *
 from sampling import mnist_iid, mnist_noniid, mnist_noniid_unequal
@@ -191,14 +193,23 @@ def calculate_kl_distance_across_all_clients(encoder, client_datasets):
     with torch.no_grad():
         for dataset in client_datasets:
             data_loader = DataLoader(dataset=dataset.training_subset, batch_size=len(dataset.training_subset))
-            looptydoopty = 0
-            for whole_batch, _ in data_loader:
-                whole_batch = whole_batch.to('cuda')
-                looptydoopty += 1
-                encoder.forward(whole_batch)
+            x, _ = next(iter(data_loader))
+            x = x.to('cuda')
+            x = torch.flatten(x, start_dim=1)
+            embeddings = encoder.forward(x).cpu().detach().numpy()
+            embeddings = embeddings.T
+            distances_per_latent_variable = []
+            for row in embeddings:
+                mu, sigma = norm.fit(row.tolist())
+                distance = -0.5 * (1 + np.log(sigma ** 2) - mu ** 2 - np.exp(np.log(sigma ** 2)))
+                distances_per_latent_variable.append(distance)
+            kl_distances.append(np.average(distances_per_latent_variable))
 
-            assert looptydoopty == 1
-            kl_distances.append(encoder.kl.item())
+
+
+
+
+
 
     encoder.train()
     return kl_distances
