@@ -215,8 +215,9 @@ def calculate_kl_distance_across_all_clients(encoder, client_datasets):
     return kl_distances
 
 def calculate_inverse_divergences(kl_divergences):
-    inv_divergences = [1 / div for div in kl_divergences]
-    return [inv / sum(inv_divergences) for inv in inv_divergences]
+    # inv_divergences = [1 / div for div in kl_divergences]
+    # return [inv / sum(inv_divergences) for inv in inv_divergences]
+    return [divergence / sum(kl_divergences) for divergence in kl_divergences]
 
 
 def __calculate_new_weight(inverse_kl_distances, client_dataset_wrappers, gamma):

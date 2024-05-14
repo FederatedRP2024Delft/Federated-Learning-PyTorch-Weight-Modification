@@ -10,7 +10,6 @@ from src.utils import *
 
 LATENT_DIMS = 2
 
-
 def federate(args, custom_client_weights=None, custom_client_datasets=None):
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
@@ -47,7 +46,7 @@ def federate(args, custom_client_weights=None, custom_client_datasets=None):
 
             local_model.eval()
             validation_dataset = client_dataset_manager.validation_subset
-            total_val_loss, mse_val_loss, kl_val_loss = local_model.evaluate_model(validation_dataset,1)
+            total_val_loss, mse_val_loss, kl_val_loss = local_model.evaluate_model(validation_dataset,1, beta=args.beta)
             print(
                 f"Global Validation user {user_idx} in round {epoch + 1} totalL: {total_val_loss} mseL: {mse_val_loss} klL: {kl_val_loss}")
 
@@ -59,6 +58,8 @@ def federate(args, custom_client_weights=None, custom_client_datasets=None):
         total_test_loss, mse_test_loss, kl_test_loss = global_model.evaluate_model(test_dataset, 1)
         print(f"TEST LOSS AT GLOBAL ROUND {epoch + 1} totalL: {total_test_loss}")
 
+
+    print("TRAINING ALL DONE!")
     return FederationResult(global_model, client_losses, client_datasets)
 
 

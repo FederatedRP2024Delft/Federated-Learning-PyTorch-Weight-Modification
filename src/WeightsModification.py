@@ -1,7 +1,8 @@
 import numpy as np
 from torch.utils.data import Subset, DataLoader
+import matplotlib.pyplot as plt
 import pickle
-
+import pandas as pd
 
 class ClientDatasetManager:
     def __init__(self, dataset, idxs):
@@ -20,6 +21,61 @@ class ClientDatasetManager:
 
     def val_length(self):
         return len(self.validation_subset)
+
+    def _get_dataset_split(self):
+        whole_dataset = self.training_subset.dataset
+        whole_labels = np.array(whole_dataset.targets)
+        relevant_idxs = self.training_subset.indices
+        res = [0] * len(np.unique(whole_labels))
+        for i in relevant_idxs:
+            res[whole_labels[i]] += 1
+        return res
+
+    @staticmethod
+    def plot_dataset_splits(client_dataset_managers):
+        client_splits = [manager._get_dataset_split() for manager in client_dataset_managers]
+        columns = ["Client","0","1","2","3","4","5","6","7","8","9"]
+
+        for i in range(len(client_splits)):
+            client_splits[i].insert(0, i)
+
+        df = pd.DataFrame(client_splits, columns=columns)
+        df.plot(x = 'Client', kind='bar', stacked=False)
+
+
+        # class_splits = []
+        # num_classes = len(np.unique(np.array(client_dataset_managers[0].training_subset.dataset.targets)))
+        # class_splits = [[] for _ in range(num_classes)]
+        # for client_dataset_manager in client_dataset_managers:
+        #     client_split = client_dataset_manager._get_dataset_split()
+        #     for i in range(len(client_split)):
+        #         class_splits[i].append(client_split[i])
+        #
+        # # x = [f"Client {client_idx}" for client_idx in range(len(client_dataset_managers))]
+        # x = np.arange(len(client_dataset_managers))
+        # width = 0.2
+        # multiplier = 0
+        #
+        # fig, ax = plt.subplots(layout='constrained')
+        # for class_split in class_splits:
+        #     offset = width * multiplier
+        #     rects = ax.bar(x + offset, class_split, width)
+        #     ax.bar_label(rects, padding=3)
+        #     multiplier += 1
+        #
+        # ax.set_ylabel('Frequency')
+        # ax.set_xticks(x + width, [f"Client {client_idx}" for client_idx in x])
+        # # ax.set_ylim(0,250)
+        # plt.show()
+
+
+
+
+
+
+
+
+
 
 
 class ClientLossManager:

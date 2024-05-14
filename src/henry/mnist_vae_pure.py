@@ -102,13 +102,14 @@ class VariationalAutoencoder(nn.Module):
                 opt.zero_grad()
 
                 x = torch.flatten(x, start_dim=1)
-                # Forward pass
-                x_hat = vae(x)
 
+                # Forward pass
+                x_hat = vae.forward(x)
 
                 # Calculate losses
                 loss_fn = nn.MSELoss(reduction="none")
-                mse_loss = torch.sum(loss_fn(x_hat,x),dim=1).mean() # This could be the problem
+                # We now sum right than average down, we might want to average right and average down
+                mse_loss = torch.sum(loss_fn(x_hat , x),dim=1).mean()
                 kl_loss = beta * vae.encoder.kl
                 loss = mse_loss + kl_loss
 
@@ -151,7 +152,7 @@ class VariationalAutoencoder(nn.Module):
 
                 # Forward pass
                 x = torch.flatten(x, start_dim=1)
-                x_hat = vae(x)
+                x_hat = vae.forward(x)
 
                 # Calculate losses
                 loss_fn = nn.MSELoss(reduction="none")
