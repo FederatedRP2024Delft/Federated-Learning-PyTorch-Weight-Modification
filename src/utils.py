@@ -225,7 +225,7 @@ def __calculate_new_weight(inverse_kl_distances, client_dataset_wrappers, gamma)
     assert len(inverse_kl_distances) == len(client_dataset_wrappers)
     relative_dataset_sizes = calculate_relative_dataset_sizes(client_dataset_wrappers)
     for i in range(len(client_dataset_wrappers)):
-        new_client_weight = gamma * relative_dataset_sizes[i] + (1 - gamma) * inverse_kl_distances[i]
+        new_client_weight = (1 - gamma) * relative_dataset_sizes[i] + gamma * inverse_kl_distances[i]
         res.append(new_client_weight)
     return res
 
