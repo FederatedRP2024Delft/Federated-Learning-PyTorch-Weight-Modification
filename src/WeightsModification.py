@@ -6,12 +6,12 @@ import pandas as pd
 
 class ClientDatasetManager:
     def __init__(self, dataset, idxs):
-        np.random.shuffle(idxs)
-        training_idxs, validation_idxs = idxs[:int(0.8 * len(idxs))], idxs[int(0.8 * len(idxs)):]
-        training_idxs = [int(i) for i in training_idxs]
-        validation_idxs= [int(i) for i in validation_idxs]
-        self.training_subset = Subset(dataset, training_idxs)
-        self.validation_subset = Subset(dataset, validation_idxs)
+        # np.random.shuffle(idxs)
+        # training_idxs, validation_idxs = idxs[:int(0.8 * len(idxs))], idxs[int(0.8 * len(idxs)):]
+        # training_idxs = [int(i) for i in training_idxs]
+        # validation_idxs= [int(i) for i in validation_idxs]
+        self.training_subset = Subset(dataset, idxs)
+        # self.validation_subset = Subset(dataset, validation_idxs)
 
     def __len__(self):
         self.train_length()
@@ -19,8 +19,8 @@ class ClientDatasetManager:
     def train_length(self):
         return len(self.training_subset)
 
-    def val_length(self):
-        return len(self.validation_subset)
+    # def val_length(self):
+    #     return len(self.validation_subset)
 
     def _get_dataset_split(self):
         whole_dataset = self.training_subset.dataset
@@ -144,10 +144,11 @@ class ClientLossManager:
 
 
 class FederationResult:
-    def __init__(self, global_model, all_losses, client_datasets):
+    def __init__(self, global_model, all_losses, client_datasets, global_loss_manager):
         self.global_model = global_model
         self.all_losses = all_losses
         self.client_datasets= client_datasets
+        self.global_loss_manager = global_loss_manager
 
     def serialise(self, identifier, args):
         file_name = '../../save/objects/{}_{}_{}_COMMS{}_LOCAL{}_BS{}_USERS{}.pkl'. \

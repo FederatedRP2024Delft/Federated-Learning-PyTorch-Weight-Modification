@@ -29,6 +29,8 @@ def federate(args, custom_client_weights=None, custom_client_datasets=None):
     global_model = construct_model(args)
     global_weights = global_model.state_dict()
 
+    global_loss_manager = ClientLossManager()
+
     for epoch in tqdm(range(args.epochs)):
         local_weights = []
         print(f'\n | Global Training Round : {epoch + 1} |\n')
@@ -41,26 +43,27 @@ def federate(args, custom_client_weights=None, custom_client_datasets=None):
             local_model.train()
             li_total, li_mse, li_kl = local_model.train_model(client_dataset_manager.training_subset, args.local_bs,
                                                               args.local_ep, beta=args.beta)
+            li_total, li_mse, li_kl = [value * client_weights[user_idx] for value in li_total], [value * client_weights[user_idx] for value in li_mse], [value * client_weights[user_idx] for value in li_kl]
             client_losses[user_idx].add_training_losses(li_total, li_mse, li_kl)
             local_weights.append(copy.deepcopy(local_model.state_dict()))
 
-            local_model.eval()
-            validation_dataset = client_dataset_manager.validation_subset
-            total_val_loss, mse_val_loss, kl_val_loss = local_model.evaluate_model(validation_dataset,1, beta=args.beta)
-            print(
-                f"Global Validation user {user_idx} in round {epoch + 1} totalL: {total_val_loss} mseL: {mse_val_loss} klL: {kl_val_loss}")
-
-            client_losses[user_idx].add_validation_losses(total_val_loss, mse_val_loss, kl_val_loss)
+            # local_model.eval()
+            # total_val_loss, mse_val_loss, kl_val_loss = local_model.evaluate_model(test_dataset,batch_size=1, beta=args.beta)
+            # print(
+            #     f"(Test Set) user {user_idx} in round {epoch + 1} totalL: {total_val_loss} mseL: {mse_val_loss} klL: {kl_val_loss}")
+            #
+            # client_losses[user_idx].add_validation_losses(total_val_loss, mse_val_loss, kl_val_loss)
 
         global_weights = fed_avg(local_weights, client_weights)
         global_model.load_state_dict(global_weights)
         global_model.eval()
         total_test_loss, mse_test_loss, kl_test_loss = global_model.evaluate_model(test_dataset, 1)
+        global_loss_manager.add_validation_losses(total_test_loss, mse_test_loss, kl_test_loss)
         print(f"TEST LOSS AT GLOBAL ROUND {epoch + 1} totalL: {total_test_loss}")
 
 
     print("TRAINING ALL DONE!")
-    return FederationResult(global_model, client_losses, client_datasets)
+    return FederationResult(global_model, client_losses, client_datasets, global_loss_manager)
 
 
 def construct_model(args):

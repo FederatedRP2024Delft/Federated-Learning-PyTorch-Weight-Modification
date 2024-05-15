@@ -229,9 +229,26 @@ def __calculate_new_weight(inverse_kl_distances, client_dataset_wrappers, gamma)
         res.append(new_client_weight)
     return res
 
-def calculate_new_weights(encoder, client_dataset_wrappers, gamma):
+def local_discrepancy_weights(kl_distances, client_dataset_wrappers, alpha, beta):
+    relative_dataset_sizes = calculate_relative_dataset_sizes(client_dataset_wrappers)
+    assert len(kl_distances) == len(relative_dataset_sizes)
+    discrepancies = []
+    for i in range(len(kl_distances)):
+        discrepancy = max(0, relative_dataset_sizes[i] - alpha * kl_distances[i] + beta)
+        discrepancies.append(discrepancy)
+    res = []
+    if sum(discrepancies) == 0:
+        raise ValueError("ADJUST YOUR HYPERPARAMS, WEIGHING IS IMPOSSIBLE.")
+
+    for discrepancy in discrepancies:
+        res.append(discrepancy / sum(discrepancies))
+    return res
+
+
+def calculate_new_weights(encoder, client_dataset_wrappers, alpha, beta):
     kl_distances = calculate_kl_distance_across_all_clients(encoder, client_dataset_wrappers)
-    inverse_kl_distances = calculate_inverse_divergences(kl_distances)
-    return __calculate_new_weight(inverse_kl_distances, client_dataset_wrappers, gamma)
+    # inverse_kl_distances = calculate_inverse_divergences(kl_distances)
+    # return __calculate_new_weight(inverse_kl_distances, client_dataset_wrappers, gamma)
+    return local_discrepancy_weights(kl_distances, client_dataset_wrappers, alpha, beta)
 
 
