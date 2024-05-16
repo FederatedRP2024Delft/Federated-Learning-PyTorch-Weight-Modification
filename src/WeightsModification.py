@@ -3,6 +3,7 @@ from torch.utils.data import Subset, DataLoader
 import matplotlib.pyplot as plt
 import pickle
 import pandas as pd
+from utils import calculate_relative_dataset_sizes
 
 class ClientDatasetManager:
     def __init__(self, dataset, idxs):
@@ -34,10 +35,10 @@ class ClientDatasetManager:
     @staticmethod
     def plot_dataset_splits(client_dataset_managers):
         client_splits = [manager._get_dataset_split() for manager in client_dataset_managers]
-        columns = ["Client","0","1","2","3","4","5","6","7","8","9"]
+        columns = ["Client"].extend([str(val) for val in range(len(client_dataset_managers))])
 
         for i in range(len(client_splits)):
-            client_splits[i].insert(0, i)
+            client_splits[i].insert(0, i )
 
         df = pd.DataFrame(client_splits, columns=columns)
         df.plot(x = 'Client', kind='bar', stacked=False)
