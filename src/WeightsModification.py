@@ -35,13 +35,14 @@ class ClientDatasetManager:
     @staticmethod
     def plot_dataset_splits(client_dataset_managers):
         client_splits = [manager._get_dataset_split() for manager in client_dataset_managers]
-        columns = ["Client"].extend([str(val) for val in range(len(client_dataset_managers))])
+        columns = ['Client'].extend([str(val) for val in range(len(client_dataset_managers))])
+        columns = ['Client','0','1','2','3','4','5','6','7','8','9']
 
         for i in range(len(client_splits)):
-            client_splits[i].insert(0, i )
+            client_splits[i].insert(0,str(i))
 
         df = pd.DataFrame(client_splits, columns=columns)
-        df.plot(x = 'Client', kind='bar', stacked=False)
+        df.plot(x ='Client', kind='bar', stacked=False)
 
 
 

@@ -48,7 +48,6 @@ def federate(args, custom_client_weights=None, custom_client_datasets=None):
 
             local_model.eval()
             total_val_loss, mse_val_loss, kl_val_loss = local_model.evaluate_model(test_dataset,batch_size=1, beta=args.beta)
-            total_val_loss, mse_val_loss, kl_val_loss = client_weights[user_idx] * total_val_loss, client_weights[user_idx] * mse_val_loss, client_weights[user_idx] * kl_val_loss
             print(
                 f"(Test Set) user {user_idx} in round {epoch + 1} totalL: {total_val_loss} mseL: {mse_val_loss} klL: {kl_val_loss}")
 
