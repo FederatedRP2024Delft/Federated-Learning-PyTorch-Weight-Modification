@@ -7,12 +7,12 @@ from utils import calculate_relative_dataset_sizes
 
 class ClientDatasetManager:
     def __init__(self, dataset, idxs):
-        np.random.shuffle(idxs)
-        training_idxs, validation_idxs = idxs[:int(0.8 * len(idxs))], idxs[int(0.8 * len(idxs)):]
-        training_idxs = [int(i) for i in training_idxs]
-        validation_idxs= [int(i) for i in validation_idxs]
-        self.training_subset = Subset(dataset, training_idxs)
-        self.validation_subset = Subset(dataset, validation_idxs)
+        # np.random.shuffle(idxs)
+        # training_idxs, validation_idxs = idxs[:int(0.8 * len(idxs))], idxs[int(0.8 * len(idxs)):]
+        # training_idxs = [int(i) for i in training_idxs]
+        # validation_idxs= [int(i) for i in validation_idxs]
+        self.training_subset = Subset(dataset, [int(i) for i in idxs])
+        # self.validation_subset = Subset(dataset, validation_idxs)
 
     def __len__(self):
         self.train_length()
@@ -20,8 +20,8 @@ class ClientDatasetManager:
     def train_length(self):
         return len(self.training_subset)
 
-    def val_length(self):
-        return len(self.validation_subset)
+    # def val_length(self):
+    #     return len(self.validation_subset)
 
     def _get_dataset_split(self):
         whole_dataset = self.training_subset.dataset
@@ -35,7 +35,6 @@ class ClientDatasetManager:
     @staticmethod
     def plot_dataset_splits(client_dataset_managers):
         client_splits = [manager._get_dataset_split() for manager in client_dataset_managers]
-        columns = ['Client'].extend([str(val) for val in range(len(client_dataset_managers))])
         columns = ['Client','0','1','2','3','4','5','6','7','8','9']
 
         for i in range(len(client_splits)):
@@ -120,8 +119,8 @@ class FederationResult:
         self.global_loss_manager = global_loss_manager
 
     def serialise(self, identifier, args):
-        file_name = '../../save/objects/{}_{}_{}_COMMS{}_LOCAL{}_BS{}_USERS{}.pkl'. \
-            format(identifier,args.dataset, "VAE", args.epochs, args.local_ep, args.local_bs, args.num_users)
+        file_name = '../../save/objects/{}_{}_{}_COMMS{}_LOCAL{}_BS{}_USERS{}_IID{}.pkl'. \
+            format(identifier,args.dataset, args.beta, args.epochs, args.local_ep, args.local_bs, args.num_users,args.iid)
 
         with open(file_name, 'wb') as f:
             pickle.dump(self, f)

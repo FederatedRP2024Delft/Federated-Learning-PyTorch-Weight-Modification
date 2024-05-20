@@ -22,6 +22,60 @@ def mnist_iid(dataset, num_users):
         all_idxs = list(set(all_idxs) - dict_users[i])
     return dict_users
 
+def split_some_iid_split_others_dirichlet(dataset, num_users, frac_split_iid,is_cfar, beta):
+    num_users_split_iid = int(frac_split_iid * num_users)
+    num_items_per_user = int(len(dataset)/num_users)
+
+    dict_users = {i: np.array([]) for i in range(num_users)}
+    all_idxs = [i for i in range(len(dataset))]
+    for i in range(num_users_split_iid):
+        dict_users[i] = set(np.random.choice(all_idxs, num_items_per_user,
+                                             replace=False))
+        all_idxs = list(set(all_idxs) - dict_users[i])
+        dict_users[i] = np.array(list(dict_users[i]))
+
+    available_idxs = set(all_idxs)
+    idxs = np.arange(len(dataset))
+
+    labels = np.array(dataset.targets) if is_cfar else dataset.train_labels.numpy()
+    uniq_labels = np.unique(labels)
+    idxs_labels = np.vstack((idxs, labels))
+    idxs_labels = idxs_labels[:, idxs_labels[1, :].argsort()]
+    idxs_labels = idxs_labels.T
+
+    for label in uniq_labels:
+        relevant_idxs = idxs_labels[(idxs_labels[:, 1] == label)][:, 0].T
+        filtered_idxs = []
+
+        for candidate_idx in relevant_idxs:
+            if candidate_idx in available_idxs:
+                filtered_idxs.append(candidate_idx)
+
+        relevant_idxs = np.array(filtered_idxs)
+
+        proportions = np.random.dirichlet(np.full(num_users - num_users_split_iid, beta))
+        splits = split_by_ratio(relevant_idxs, proportions)
+        for idx, split in enumerate(splits):
+            dict_users[idx + num_users_split_iid] = np.concatenate([dict_users[idx + num_users_split_iid], split])
+
+    for _, dict_val in dict_users.items():
+        if len(dict_val) < 40:
+            # We just restart a split if a user isn't assigned enough samples.
+            return split_some_iid_split_others_dirichlet(dataset, num_users,frac_split_iid, is_cfar, beta)
+
+
+
+
+
+
+
+
+    return dict_users
+
+
+
+
+
 
 def split_dirichlet(dataset, num_users: int, is_cfar: bool, beta: float = 0.5) -> dict[int, [int]]:
     """

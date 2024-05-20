@@ -9,6 +9,8 @@ from torch.utils.data import DataLoader
 import numpy as np
 from scipy.stats import norm
 
+import matplotlib.pyplot as plt
+
 from sampling import *
 from sampling import mnist_iid, mnist_noniid, mnist_noniid_unequal
 from sampling import cifar_iid, cifar_noniid
@@ -73,6 +75,8 @@ def get_dataset(args):
             user_groups = mnist_iid(train_dataset, args.num_users)
         elif args.iid == 2:
             user_groups = split_dirichlet(train_dataset, args.num_users, is_cfar=False, beta=args.dirichlet)
+        elif args.iid == 3:
+            user_groups = split_some_iid_split_others_dirichlet(train_dataset, args.num_users,args.frac_split, is_cfar=False, beta=args.dirichlet)
         else:
             # Sample Non-IID user data from Mnist
             if args.unequal:
@@ -200,7 +204,11 @@ def calculate_kl_distance_across_all_clients(encoder, client_datasets):
             embeddings = embeddings.T
             distances_per_latent_variable = []
             for row in embeddings:
-                mu, sigma = norm.fit(row.tolist())
+                actual_data = row.tolist()
+                # plt.hist(actual_data,bins=50)
+                # plt.ylabel("")
+                # plt.show()
+                mu, sigma = norm.fit(actual_data)
                 distance = -0.5 * (1 + np.log(sigma ** 2) - mu ** 2 - np.exp(np.log(sigma ** 2)))
                 distances_per_latent_variable.append(distance)
             kl_distances.append(np.average(distances_per_latent_variable))
