@@ -22,6 +22,62 @@ def mnist_iid(dataset, num_users):
         all_idxs = list(set(all_idxs) - dict_users[i])
     return dict_users
 
+
+def niid2(dataset, num_users, is_cfar):
+    if num_users != 6:
+        raise ValueError('Number of users must equal 6 in NIID-2')
+
+    num_items_per_user = int(len(dataset)/num_users)
+    dict_users = {i: np.array([]) for i in range(num_users)}
+
+    # Create partition for non-biased user
+    all_idxs = [i for i in range(len(dataset))]
+    dict_users[0] = set(np.random.choice(all_idxs, num_items_per_user,replace=False))
+    all_idxs = list(set(all_idxs) - dict_users[0])
+    dict_users[0] = np.array(list(dict_users[0]))
+
+    available_idxs = set(all_idxs)
+    idxs = np.arange(len(dataset))
+    labels = np.array(dataset.targets) if is_cfar else dataset.train_labels.numpy()
+    uniq_labels = np.unique(labels)
+    idxs_labels = np.vstack((idxs, labels))
+    idxs_labels = idxs_labels[:, idxs_labels[1, :].argsort()]
+    idxs_labels = idxs_labels.T
+
+    uniq_labels = uniq_labels.tolist()
+    labels_per_user = int(len(uniq_labels) / (num_users - 1))
+    for user_idx in range(1, num_users):
+        labels_assigned_to_user = np.random.choice(uniq_labels, labels_per_user, replace=False)
+        uniq_labels = list(set(uniq_labels) - set(labels_assigned_to_user))
+
+        for label in labels_assigned_to_user:
+            relevant_idxs = idxs_labels[(idxs_labels[:, 1] == label)][:, 0].T
+            filtered_idxs = []
+
+            for candidate_idx in relevant_idxs:
+                if candidate_idx in available_idxs:
+                    filtered_idxs.append(candidate_idx)
+
+            relevant_idxs = np.array(filtered_idxs)
+            dict_users[user_idx] = np.concatenate([dict_users[user_idx], relevant_idxs])
+
+    for _, dict_val in dict_users.items():
+        if len(dict_val) < 40:
+            # We just restart a split if a user isn't assigned enough samples.
+            return niid2(dataset, num_users, is_cfar)
+
+    return dict_users
+
+
+
+
+
+
+
+
+
+
+
 def split_some_iid_split_others_dirichlet(dataset, num_users, frac_split_iid,is_cfar, beta):
     num_users_split_iid = int(frac_split_iid * num_users)
     num_items_per_user = int(len(dataset)/num_users)

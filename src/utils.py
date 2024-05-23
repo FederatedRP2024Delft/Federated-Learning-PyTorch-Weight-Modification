@@ -3,6 +3,8 @@
 # Python version: 3.6
 
 import copy
+
+import scipy.stats
 import torch
 from torch import tensor
 from torch.utils.data import DataLoader
@@ -77,6 +79,8 @@ def get_dataset(args):
             user_groups = split_dirichlet(train_dataset, args.num_users, is_cfar=False, beta=args.dirichlet)
         elif args.iid == 3:
             user_groups = split_some_iid_split_others_dirichlet(train_dataset, args.num_users,args.frac_split, is_cfar=False, beta=args.dirichlet)
+        elif args.iid == 4:
+            user_groups = niid2(train_dataset, args.num_users, False)
         else:
             # Sample Non-IID user data from Mnist
             if args.unequal:
@@ -190,10 +194,11 @@ def calculate_relative_dataset_sizes(client_dataset_wrappers):
     return [(dataset_size / total_size) for dataset_size in client_sizes]
 
 
-def calculate_kl_distance_across_all_clients(encoder, client_datasets):
+def calculate_statistical_distance_across_all_clients(encoder, client_datasets):
     encoder.to('cuda')
     kl_distances = []
     encoder.eval()
+    target_standard_normal = np.random.normal(0,1,100000)
     with torch.no_grad():
         for dataset in client_datasets:
             data_loader = DataLoader(dataset=dataset.training_subset, batch_size=len(dataset.training_subset))
@@ -208,14 +213,11 @@ def calculate_kl_distance_across_all_clients(encoder, client_datasets):
                 # plt.hist(actual_data,bins=50)
                 # plt.ylabel("")
                 # plt.show()
-                mu, sigma = norm.fit(actual_data)
-                distance = -0.5 * (1 + np.log(sigma ** 2) - mu ** 2 - np.exp(np.log(sigma ** 2)))
+                # mu, sigma = norm.fit(actual_data)
+                # distance = -0.5 * (1 + np.log(sigma ** 2) - mu ** 2 - np.exp(np.log(sigma ** 2)))
+                distance = scipy.stats.wasserstein_distance(actual_data, target_standard_normal)
                 distances_per_latent_variable.append(distance)
             kl_distances.append(np.average(distances_per_latent_variable))
-
-
-
-
 
 
 
@@ -254,9 +256,9 @@ def local_discrepancy_weights(kl_distances, client_dataset_wrappers, alpha, beta
 
 
 def calculate_new_weights(encoder, client_dataset_wrappers, alpha, beta):
-    kl_distances = calculate_kl_distance_across_all_clients(encoder, client_dataset_wrappers)
+    distances = calculate_statistical_distance_across_all_clients(encoder, client_dataset_wrappers)
     # inverse_kl_distances = calculate_inverse_divergences(kl_distances)
     # return __calculate_new_weight(inverse_kl_distances, client_dataset_wrappers, gamma)
-    return local_discrepancy_weights(kl_distances, client_dataset_wrappers, alpha, beta)
+    return local_discrepancy_weights(distances, client_dataset_wrappers, alpha, beta)
 
 
