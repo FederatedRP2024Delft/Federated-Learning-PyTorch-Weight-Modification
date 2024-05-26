@@ -6,6 +6,7 @@ from henry.mnist_vae_pure import *
 from tqdm import tqdm
 from WeightsModification import *
 
+
 from src.utils import *
 
 LATENT_DIMS = 2

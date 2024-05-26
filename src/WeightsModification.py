@@ -41,7 +41,9 @@ class ClientDatasetManager:
             client_splits[i].insert(0,str(i))
 
         df = pd.DataFrame(client_splits, columns=columns)
-        df.plot(x ='Client', kind='bar', stacked=False)
+        ax = df.plot(x ='Client', kind='bar', stacked=False,legend=False,title="Category distribution of different clients")
+        ax.set_xlabel("Client #")
+        ax.set_ylabel("Frequency")
 
 
 

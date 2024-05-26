@@ -20,6 +20,7 @@ from torch import nn
 from torch.distributions.kl import kl_divergence
 from torch.distributions.normal import Normal
 from torcheval.metrics import FrechetInceptionDistance
+import ot
 
 
 def get_dataset(args):
@@ -198,9 +199,9 @@ def calculate_statistical_distance_across_all_clients(encoder, client_datasets):
     encoder.to('cuda')
     kl_distances = []
     encoder.eval()
-    target_standard_normal = np.random.normal(0,1,100000)
+    target_standard_normal = np.random.normal(0,1,1000000)
     with torch.no_grad():
-        for dataset in client_datasets:
+        for client_id, dataset in enumerate(client_datasets):
             data_loader = DataLoader(dataset=dataset.training_subset, batch_size=len(dataset.training_subset))
             x, _ = next(iter(data_loader))
             x = x.to('cuda')
@@ -208,14 +209,13 @@ def calculate_statistical_distance_across_all_clients(encoder, client_datasets):
             embeddings = encoder.forward(x).cpu().detach().numpy()
             embeddings = embeddings.T
             distances_per_latent_variable = []
-            for row in embeddings:
+            for latent_dim_idx, row in enumerate(embeddings):
                 actual_data = row.tolist()
-                # plt.hist(actual_data,bins=50)
-                # plt.ylabel("")
-                # plt.show()
-                # mu, sigma = norm.fit(actual_data)
-                # distance = -0.5 * (1 + np.log(sigma ** 2) - mu ** 2 - np.exp(np.log(sigma ** 2)))
-                distance = scipy.stats.wasserstein_distance(actual_data, target_standard_normal)
+                plt.hist(actual_data,bins=50)
+                plt.ylabel("Frequency")
+                plt.title(f"Latent encoding of samples belonging to Client {client_id} in latent dimension {latent_dim_idx + 1}")
+                plt.show()
+                distance = ot.wasserstein_1d(np.array(actual_data), target_standard_normal)
                 distances_per_latent_variable.append(distance)
             kl_distances.append(np.average(distances_per_latent_variable))
 
