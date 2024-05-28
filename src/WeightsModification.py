@@ -44,6 +44,7 @@ class ClientDatasetManager:
         ax = df.plot(x ='Client', kind='bar', stacked=False,legend=False,title="Category distribution of different clients")
         ax.set_xlabel("Client #")
         ax.set_ylabel("Frequency")
+        ax.yaxis.grid(True)
 
 
 
