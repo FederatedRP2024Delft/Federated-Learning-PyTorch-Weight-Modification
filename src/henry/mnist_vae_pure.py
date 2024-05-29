@@ -20,7 +20,7 @@ import torch.nn.functional as F
 MNIST_INPUT_SIZE = 784
 HIDDEN_LAYER_SIZE_1 = 512
 HIDDEN_LAYER_SIZE_2 = 256
-DEFAULT_LATENT_DIM = 10
+DEFAULT_LATENT_DIM = 2
 
 
 class VariationalEncoder(nn.Module):
