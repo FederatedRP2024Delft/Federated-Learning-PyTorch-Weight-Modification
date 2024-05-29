@@ -224,21 +224,6 @@ def calculate_statistical_distance_across_all_clients(encoder, client_datasets):
     encoder.train()
     return kl_distances
 
-def calculate_inverse_divergences(kl_divergences):
-    inv_divergences = [1 / div for div in kl_divergences]
-    return [inv / sum(inv_divergences) for inv in inv_divergences]
-
-
-def __calculate_new_weight(inverse_kl_distances, client_dataset_wrappers, gamma):
-    res = []
-    assert 0 <= gamma <= 1
-    assert len(inverse_kl_distances) == len(client_dataset_wrappers)
-    relative_dataset_sizes = calculate_relative_dataset_sizes(client_dataset_wrappers)
-    for i in range(len(client_dataset_wrappers)):
-        new_client_weight = (1 - gamma) * relative_dataset_sizes[i] + gamma * inverse_kl_distances[i]
-        res.append(new_client_weight)
-    return res
-
 def local_discrepancy_weights(kl_distances, client_dataset_wrappers, alpha, beta):
     relative_dataset_sizes = calculate_relative_dataset_sizes(client_dataset_wrappers)
     assert len(kl_distances) == len(relative_dataset_sizes)
@@ -248,7 +233,7 @@ def local_discrepancy_weights(kl_distances, client_dataset_wrappers, alpha, beta
         discrepancies.append(discrepancy)
     res = []
     if sum(discrepancies) == 0:
-        raise ValueError("ADJUST YOUR HYPERPARAMS, WEIGHING IS IMPOSSIBLE.")
+        raise HyperValueError()
 
     for discrepancy in discrepancies:
         res.append(discrepancy / sum(discrepancies))
@@ -257,8 +242,9 @@ def local_discrepancy_weights(kl_distances, client_dataset_wrappers, alpha, beta
 
 def calculate_new_weights(encoder, client_dataset_wrappers, alpha, beta):
     distances = calculate_statistical_distance_across_all_clients(encoder, client_dataset_wrappers)
-    # inverse_kl_distances = calculate_inverse_divergences(kl_distances)
-    # return __calculate_new_weight(inverse_kl_distances, client_dataset_wrappers, gamma)
     return local_discrepancy_weights(distances, client_dataset_wrappers, alpha, beta)
 
 
+class HyperValueError(ValueError):
+    def __init__(self):
+        super().__init__("WEIGHING COULD NOT BE DONE, READJUST YOUR HYPERPARAMETERS")

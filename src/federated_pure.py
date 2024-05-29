@@ -12,8 +12,9 @@ from src.utils import *
 LATENT_DIMS = 2
 
 def federate(args, custom_client_weights=None, custom_client_datasets=None):
-    np.random.seed(args.seed)
-    torch.manual_seed(args.seed)
+    if args.seed is not None:
+        np.random.seed(args.seed)
+        torch.manual_seed(args.seed)
     path_project = os.path.abspath('..')
     logger = SummaryWriter('../logs')
     torch.cuda.set_device('cuda:0')
