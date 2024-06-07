@@ -65,7 +65,7 @@ def get_dataset(args):
             train_dataset = datasets.MNIST(data_dir, train=True, download=True,transform=apply_transform)
             test_dataset = datasets.MNIST(data_dir, train=False, download=True,transform=apply_transform)
         else:
-            data_dir = '../data/fmnist/'
+            data_dir = '../data/fashion_mnist/'
             apply_transform = transforms.Compose([
                 transforms.ToTensor(),
                 transforms.Normalize((0.2860,), (0.3530,))])
