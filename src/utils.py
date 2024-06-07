@@ -211,6 +211,7 @@ def calculate_statistical_distance_across_all_clients(encoder, client_datasets):
             distances_per_latent_variable = []
             for latent_dim_idx, row in enumerate(embeddings):
                 actual_data = row.tolist()
+                # plt.grid()
                 # plt.hist(actual_data,bins=50)
                 # plt.ylabel("Frequency")
                 # plt.title(f"Latent encoding of samples belonging to Client {client_id} in latent dimension {latent_dim_idx + 1}")
