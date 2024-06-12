@@ -1,3 +1,8 @@
+# Author's Notes
+This repository contains code that was used in my bachelor thesis. The electronic version of the thesis can be seen here: [INSERT LINK]
+I forked the repository for 2 reasons. Firstly, because my bachelor thesis tested FL methods on different models that was not readily available. Secondly, a lot of things in the original framework was broken. Despite this, we still appreciate the original repository owners for their contribution.
+The rest of the README is a duplicate of the original repository's README.
+
 # Federated-Learning (PyTorch)
 
 Implementation of the vanilla federated learning paper : [Communication-Efficient Learning of Deep Networks from Decentralized Data](https://arxiv.org/abs/1602.05629).

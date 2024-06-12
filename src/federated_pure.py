@@ -48,13 +48,6 @@ def federate(args, custom_client_weights=None, custom_client_datasets=None):
             client_losses[user_idx].add_training_losses(li_total, li_mse, li_kl)
             local_weights.append(copy.deepcopy(local_model.state_dict()))
 
-            # local_model.eval()
-            # total_val_loss, mse_val_loss, kl_val_loss = local_model.evaluate_model(test_dataset,batch_size=1, beta=args.beta)
-            # print(
-            #     f"(Test Set) user {user_idx} in round {epoch + 1} totalL: {total_val_loss} mseL: {mse_val_loss} klL: {kl_val_loss}")
-            #
-            # client_losses[user_idx].add_validation_losses(total_val_loss, mse_val_loss, kl_val_loss)
-
         global_weights = fed_avg(local_weights, client_weights)
         global_model.load_state_dict(global_weights)
         global_model.eval()
